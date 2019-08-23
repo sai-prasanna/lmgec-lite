@@ -8,8 +8,10 @@ class LanguageModel:
         self.model = GPT2LMHeadModel.from_pretrained('gpt2')
         self.model.eval()
 
-    def score(self, text: str):
-        indexed_tokens = self.tokenizer.encode(text)
-        tokens_tensor = torch.tensor([indexed_tokens])
-        lm_logits, _ = self.model(tokens_tensor)
-        return torch.gather(lm_logits, -1, tokens_tensor.unsqueeze(-1)).sum().item() / len(indexed_tokens)
+     def score(self, text: str) -> float:
+         """ Returns the sentence log probability score. """
+         input_ids = torch.tensor(self.tokenizer.encode(text)).unsqueeze(0) # Batch size 1
+         outputs = self.model(input_ids, labels=input_ids)
+         log_cross_entropy, _ = outputs[:2]
+         log_probability = -log_cross_entropy.item()
+         return log_probability
